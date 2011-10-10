@@ -9,60 +9,66 @@ import socket
 # constants
 PCAP_ERRBUF_SIZE = 256
 SIZEOF_PCAP_PKTHDR = 24
+LIBPCAP_LIBRARY_NAME = 'libpcap.so'
 
 class libpcap:
 	def __init__(self):
-		self.__libpcap = CDLL('libpcap.so') # nacita sa kniznica
+		""" Initializes object's variables and loads libpcap library. """
+
+		self.__libpcap = CDLL(LIBPCAP_LIBRARY_NAME) # libpcap library loading
 		self.__error_buffer = create_string_buffer(PCAP_ERRBUF_SIZE) # pomocny buffer na error hlasky
 		self.__pcaphdr_buffer = create_string_buffer(SIZEOF_PCAP_PKTHDR) # buffer na strukturu pcap_pkthdr
 		self.__libpcap.pcap_lookupdev.restype = c_char_p # zmena navratovej hodnoty funkcie na string zero retazec. (Defaultna navratova hodnota je int)
 		self.__libpcap.pcap_next.restype = POINTER(c_char) # zmena navratovej hodnoty funkcie na general char pointer (that can also point to binary data). (Defaultna navratova hodnota je int)
 		self.__handle = None
 
+	def getLastError(self):
+		""" Returns string containing a message with last error details. Call this method after some of libpcap methods below fails. """	
+
+		return self.__error_buffer.value.decode('utf-8')
+
 	#
 	# Original libpcap functions (wrapped):	
 	#
 	def lookupdev(self):
+		""" Returns found device as bytes object or None. """
+
 		assert(self.__libpcap)
 		assert(self.__error_buffer)
 		dev = self.__libpcap.pcap_lookupdev(self.__error_buffer)
-		if dev == None:
-			print('Chyba 1:', self.__error_buffer.value.decode('utf-8'))
-			return None
-		return dev #.decode('utf-8') # konverzia na string
+		return dev
 
 	def lookupnet(self, dev):
+		""" Returns a tuple containing the pair of network and mask or None indicating failure. """
 		assert(self.__libpcap)
 		assert(self.__error_buffer)
 		assert(sizeof(c_uint) == 4)
 		netp = c_uint()
 		maskp = c_uint()
-		# print('idem lookupovat net pre device', dev)
 		ret = self.__libpcap.pcap_lookupnet(dev, byref(netp), byref(maskp), self.__error_buffer)
 		if ret == -1:
-			print('Chyba 2:', self.__error_buffer.value.decode('utf-8'))
 			return None
 		return socket.inet_ntoa(struct.pack('<I', netp.value)), socket.inet_ntoa(struct.pack('<I', maskp.value))
 	
 	def open_live(self, dev):
+		""" Returns bool value reprezenting success/fail. Requires dev name as object of bytes type. """
+
 		assert(self.__libpcap)
 		assert(self.__error_buffer)
-		# print('otvaram live pre device', dev, type(dev))
-		self.__handle = self.__libpcap.pcap_open_live(dev, 1600, 1, 10000, self.__error_buffer)
-		# print('handle type:', type(self.__handle), 'value:', self.__handle)
-		if not self.__handle:
-			print('Chyba 3: nemozem otvorit device', self.__error_buffer.value.decode('utf-8'))
-			return False
-		return True
-		# return bool(self.__handle)
+		self.__handle = self.__libpcap.pcap_open_live(dev, 1600, 1, 10000, self.__error_buffer) # opening live for device dev
+		return bool(self.__handle)
 
 	def setdirection(self, direction_code):
+		""" Returns bool value reprezenting success/fail. Requires direction code as int object. For meaning of the values, please see libpcap documentation. """
+
 		assert(self.__libpcap)
 		assert(self.__handle)
 		ret = self.__libpcap.pcap_setdirection(self.__handle, direction_code)
-		assert(ret == 0) # musi fungovat filter na zachytavanie only INBOUND ramcov
+		return bool(ret == 0) # return value indicates if the call was successful
 
 	def next(self):
+		""" Returns captured frame as object of bytes type, or None. """
+
 		assert(self.__libpcap)
 		assert(self.__pcaphdr_buffer)
 		assert(self.__handle)
@@ -76,11 +82,15 @@ class libpcap:
 		return frameptr[:frame_caplen]
 
 	def inject(self, frame):
+		""" Returns the number of injected bytes. """
+
 		assert(self.__libpcap)
 		assert(self.__handle)
 		return self.__libpcap.pcap_inject(self.__handle, frame, len(frame));
 		
 	def close(self):
+		""" Makes cleanup. Please call this method at the end. """
+
 		assert(self.__libpcap)
 		if self.__handle:
 			self.__libpcap.pcap_close(self.__handle)
@@ -90,17 +100,17 @@ class libpcap:
 # Extra functions:
 #
 def Dumphex(data_buffer):
+	""" Prints binary data buffer in hexadecimal format with 16 bytes per line. """
+
 	byty = tuple(map(lambda x: '{0:02X}'.format(x), data_buffer))
 	for i in range(len(byty)//16 + 1):
 		print(*byty[i*16:(i+1)*16])
-		#print(' '.join(byty[i*16:(i+1)*16]))
+		#print(' '.join(byty[i*16:(i+1)*16])) # maybe faster ?
 		
 
 ##########################################################################
-# body
+# demo test body
 ##########################################################################
-
-
 
 def main():
 	ph = libpcap()
@@ -141,7 +151,7 @@ def main():
 			break
 
 	ph.close()
-	print('ales klar')
+	print('End.')
 
 if __name__ == '__main__':
 	main()
