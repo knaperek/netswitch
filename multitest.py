@@ -44,7 +44,7 @@ def main():
 			frame = ph.next()
 			if not frame:
 				continue
-			print('\n**************** Frame #{0} Captured! [{1} bytes] ********************'.format(counter, len(frame)))
+			print('\n************* Frame #{0} Captured! [{1} bytes] ************'.format(counter, len(frame)))
 			counter += 1
 			pcapo.Dumphex(frame)
 

@@ -11,6 +11,13 @@ PCAP_ERRBUF_SIZE = 256
 SIZEOF_PCAP_PKTHDR = 24
 LIBPCAP_LIBRARY_NAME = 'libpcap.so'
 
+class PcapDeviceException(Exception):
+	def __init__(self, errmsg):
+		self.__errmsg = errmsg
+
+	def __str__(self):
+		return repr(self.__errmsg)
+
 class libpcap:
 	def __init__(self):
 		""" Initializes object's variables and loads libpcap library. """
@@ -56,6 +63,8 @@ class libpcap:
 		assert(self.__libpcap)
 		assert(self.__error_buffer)
 		self.__handle = self.__libpcap.pcap_open_live(dev, 1600, 1, 10000, self.__error_buffer) # opening live for device dev
+		if not self.__handle:
+			raise PcapDeviceException(self.getLastError())
 		return bool(self.__handle)
 
 	def setdirection(self, direction_code):
@@ -64,6 +73,8 @@ class libpcap:
 		assert(self.__libpcap)
 		assert(self.__handle)
 		ret = self.__libpcap.pcap_setdirection(self.__handle, direction_code)
+		if ret:
+			raise PcapDeviceException(self.getLastError())
 		return bool(ret == 0) # return value indicates if the call was successful
 
 	def next(self):
