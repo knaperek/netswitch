@@ -1,6 +1,7 @@
 import pcapo
 import sys
 import threading
+import time
 
 # class Port(threading.Thread):
 #
@@ -22,10 +23,11 @@ class SwitchException(Exception):
 
 class Switch:
 	
-	Switch_lock = threading.Lock()
+	MACtable_lock = threading.Lock()
 
 	def __init__(self, device_list):
 		
+		self.__mactable = dict()
 		self.__ports = dict()
 		# try: # inicializacia portov (interfejsov)
 		for dev in device_list:
@@ -35,12 +37,27 @@ class Switch:
 		#except pcapo.PcapDeviceException as errmsg:
 			#raise SwitchException('Fatal error during switch initialization:' + errmsg)
 		#	raise SwitchException(str(errmsg))
-		
+		self.start_switching()
+		self.start_aging()	
+	
+	def start_switching(self):
 		for dev in self.__ports: # spustanie threadov pre kazdy port (interface)
 			hThread = threading.Thread(target=lambda: self.listenOnDevice(dev))
 			# hThread.daemon = True
 			hThread.start()
+	
+	def start_aging(self):
+		hThread = threading.Thread(target=lambda: self.doAging())
+		hThread.start()
 
+	def doAging(self):
+		while 1:
+			time.sleep(1)
+			with self.MACtable_lock: # zamok na MAC tabulku
+				for value in self.__mactable.values():
+					value[1] -= 1
+				for oldkey in [key for key, value in self.__mactable.items() if value[1] <= 0]:
+					self.__mactable.pop(oldkey) # odstranenie stareho zaznamu
 
 	def listenOnDevice(self, dev):
 		ph = self.__ports[dev]
@@ -52,7 +69,21 @@ class Switch:
 			print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), dev))
 			counter += 1
 			pcapo.Dumphex(frame)
+			
+			# aktualizovanie zaznamu v MAC tabulke
+			dstmac, srcmac = frame[:6], frame[6:12]
+			timestamp = 10 # todo
+			with self.MACtable_lock: # zamok na MAC tabulku
+				self.__mactable[srcmac] = [dev, timestamp] # obnovenie/pridanie zaznamu MAC tabulky
 
+			# preposlanie dalej
+			with self.MACtable_lock: # zamok na MAC tabulku
+				target_dev = self.__mactable.get(dstmac)
+			if target_dev: # cielove zariadenie je v mac tabulke
+				self.sendFrame(target_dev[0], frame)
+			else: # cielove zariadenie nie je v mac tabulke => flooding
+				for device in [key for key in self.__ports if key != dev]:
+					self.sendFrame(device, frame)
 
 	def sendFrame(self, dev, frame):
 		self.__ports[dev].inject(frame)
