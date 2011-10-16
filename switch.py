@@ -60,6 +60,8 @@ class Switch:
 				for oldkey in [key for key, value in self.__mactable.items() if value[1] <= 0]:
 					self.__mactable.pop(oldkey) # odstranenie stareho zaznamu
 
+			self.printMACtable() # debug
+
 	def listenOnDevice(self, dev):
 		ph = self.__ports[dev]
 		counter = 0
@@ -67,10 +69,10 @@ class Switch:
 			frame = ph.next()
 			if not frame:
 				continue
-			print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), dev))
+			#print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), dev))
 			counter += 1
 			#pcapo.Dumphex(frame)
-			self.printMACtable()
+			#self.printMACtable()
 			
 			# aktualizovanie zaznamu v MAC tabulke
 			dstmac, srcmac = frame[:6], frame[6:12]
@@ -104,13 +106,3 @@ def bytes2hexstr(bytes_buffer, sep=''):
 	""" Converts binary bytes buffer to hexa string reprezentation """	
 	return sep.join(map(lambda x: '{0:02X}'.format(x), bytes_buffer))
 
-def Dumphex(data_buffer):
-	""" Prints binary data buffer in hexadecimal format with 16 bytes per line. """
-
-	byty = tuple(map(lambda x: '{0:02X}'.format(x), data_buffer))
-	for i in range(len(byty)//16 + 1):
-		print(*byty[i*16:(i+1)*16])
-		#print(' '.join(byty[i*16:(i+1)*16])) # maybe faster ?
-
-
-				
