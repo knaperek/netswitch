@@ -43,11 +43,12 @@ class Switch:
 	def start_switching(self):
 		for dev in self.__ports: # spustanie threadov pre kazdy port (interface)
 			hThread = threading.Thread(target=lambda: self.listenOnDevice(dev))
-			# hThread.daemon = True
+			hThread.daemon = True
 			hThread.start()
 	
 	def start_aging(self):
 		hThread = threading.Thread(target=lambda: self.doAging())
+		hThread.daemon = True
 		hThread.start()
 
 	def doAging(self):
