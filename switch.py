@@ -68,7 +68,8 @@ class Switch:
 				continue
 			print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), dev))
 			counter += 1
-			pcapo.Dumphex(frame)
+			#pcapo.Dumphex(frame)
+			self.printMACtable()
 			
 			# aktualizovanie zaznamu v MAC tabulke
 			dstmac, srcmac = frame[:6], frame[6:12]
@@ -78,15 +79,37 @@ class Switch:
 
 			# preposlanie dalej
 			with self.MACtable_lock: # zamok na MAC tabulku
-				target_dev = self.__mactable.get(dstmac)
+				target_dev = self.__mactable.get(dstmac, [None, None])[0]
 			if target_dev: # cielove zariadenie je v mac tabulke
-				self.sendFrame(target_dev[0], frame)
+				if target_dev != dev: # ak sa cielove zariadenie nenachadza na segmente, z ktoreho ramec prichadza
+					self.sendFrame(target_dev, frame)
 			else: # cielove zariadenie nie je v mac tabulke => flooding
-				for device in [key for key in self.__ports if key != dev]:
+				for device in [key for key in self.__ports if key != dev]: # pre vsetky porty okrem toho, z ktoreho ramec prisiel
 					self.sendFrame(device, frame)
 
 	def sendFrame(self, dev, frame):
 		self.__ports[dev].inject(frame)
 		
-		
+	
+	def printMACtable(self):
+		print('*' * 15 + ' MAC Table ' + '*' * 15)
+		print('MAC address', '\tIface', 'TTL', sep='\t')
+		with self.MACtable_lock:
+			for key, value in self.__mactable.items():
+				print(bytes2hexstr(key, sep=':'), value[0].decode('utf-8'), value[1], sep='\t')
 
+
+def bytes2hexstr(bytes_buffer, sep=''):
+	""" Converts binary bytes buffer to hexa string reprezentation """	
+	return sep.join(map(lambda x: '{0:02X}'.format(x), bytes_buffer))
+
+def Dumphex(data_buffer):
+	""" Prints binary data buffer in hexadecimal format with 16 bytes per line. """
+
+	byty = tuple(map(lambda x: '{0:02X}'.format(x), data_buffer))
+	for i in range(len(byty)//16 + 1):
+		print(*byty[i*16:(i+1)*16])
+		#print(' '.join(byty[i*16:(i+1)*16])) # maybe faster ?
+
+
+				
