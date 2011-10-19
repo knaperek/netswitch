@@ -29,14 +29,13 @@ class Switch:
 		
 		self.__mactable = dict()
 		self.__ports = dict()
-		# try: # inicializacia portov (interfejsov)
-		for dev in device_list:
-			self.__ports[dev] = pcapo.libpcap()
-			self.__ports[dev].open_live(dev)
-			self.__ports[dev].setdirection(1)
-		#except pcapo.PcapDeviceException as errmsg:
-			#raise SwitchException('Fatal error during switch initialization:' + errmsg)
-		#	raise SwitchException(str(errmsg))
+		try: # inicializacia portov (interfejsov)
+			for dev in device_list:
+				self.__ports[dev] = pcapo.libpcap()
+				self.__ports[dev].open_live(bytes(dev))
+				self.__ports[dev].setdirection(1)
+		except pcapo.PcapDeviceException as errmsg:
+			raise SwitchException('Fatal error during switch initialization:' + str(errmsg))
 		self.start_switching()
 		self.start_aging()	
 	
@@ -57,7 +56,8 @@ class Switch:
 			with self.MACtable_lock: # zamok na MAC tabulku
 				for value in self.__mactable.values():
 					value[1] -= 1
-				for oldkey in [key for key, value in self.__mactable.items() if value[1] <= 0]:
+				oldkeys = [key for key, value in self.__mactable.items() if value[1] <= 0]
+				for oldkey in oldkeys:
 					self.__mactable.pop(oldkey) # odstranenie stareho zaznamu
 
 			self.printMACtable() # debug
@@ -76,9 +76,9 @@ class Switch:
 			
 			# aktualizovanie zaznamu v MAC tabulke
 			dstmac, srcmac = frame[:6], frame[6:12]
-			timestamp = 10 # todo
+			timeleft = 10 # todo
 			with self.MACtable_lock: # zamok na MAC tabulku
-				self.__mactable[srcmac] = [dev, timestamp] # obnovenie/pridanie zaznamu MAC tabulky
+				self.__mactable[srcmac] = [dev, timeleft] # obnovenie/pridanie zaznamu MAC tabulky
 
 			# preposlanie dalej
 			with self.MACtable_lock: # zamok na MAC tabulku

@@ -21,8 +21,10 @@ class PcapDeviceException(Exception):
 class libpcap:
 	def __init__(self):
 		""" Initializes object's variables and loads libpcap library. """
-
-		self.__libpcap = CDLL(LIBPCAP_LIBRARY_NAME) # libpcap library loading
+		try:
+			self.__libpcap = CDLL(LIBPCAP_LIBRARY_NAME) # libpcap library loading
+		except OSError as oserror:
+			raise PcapDeviceException(str(oserror))
 		self.__error_buffer = create_string_buffer(PCAP_ERRBUF_SIZE) # pomocny buffer na error hlasky
 		self.__pcaphdr_buffer = create_string_buffer(SIZEOF_PCAP_PKTHDR) # buffer na strukturu pcap_pkthdr
 		self.__libpcap.pcap_lookupdev.restype = c_char_p # zmena navratovej hodnoty funkcie na string zero retazec. (Defaultna navratova hodnota je int)
@@ -65,7 +67,6 @@ class libpcap:
 		self.__handle = self.__libpcap.pcap_open_live(dev, 1600, 1, 10000, self.__error_buffer) # opening live for device dev
 		if not self.__handle:
 			raise PcapDeviceException(self.getLastError())
-		return bool(self.__handle)
 
 	def setdirection(self, direction_code):
 		""" Returns bool value reprezenting success/fail. Requires direction code as int object. For meaning of the values, please see libpcap documentation. """
@@ -75,7 +76,6 @@ class libpcap:
 		ret = self.__libpcap.pcap_setdirection(self.__handle, direction_code)
 		if ret:
 			raise PcapDeviceException(self.getLastError())
-		return bool(ret == 0) # return value indicates if the call was successful
 
 	def next(self):
 		""" Returns captured frame as object of bytes type, or None. """
@@ -118,51 +118,3 @@ def Dumphex(data_buffer):
 		print(*byty[i*16:(i+1)*16])
 		#print(' '.join(byty[i*16:(i+1)*16])) # maybe faster ?
 		
-
-##########################################################################
-# demo test body
-##########################################################################
-
-def main():
-	ph = libpcap()
-	device = ph.lookupdev()
-	if not device:
-		print('Device not found!')
-		sys.exit(1)
-	print('Device:', device)
-	lookupnet = ph.lookupnet(device)
-	if lookupnet:
-		network, netmask = lookupnet
-		print('Network:', network)
-		print('Netmask:', netmask)
-
-# pcap_open_live(...)
-	if not ph.open_live(device):
-		sys.exit(1)
-
-	ph.setdirection(1)
-
-
-# pcap_next
-
-	counter = 0
-	while 1:
-		try:
-			frame = ph.next()
-			if not frame:
-				continue
-			print('\n**************** Frame #{0} Captured! [{1} bytes] ********************'.format(counter, len(frame)))
-			counter += 1
-			Dumphex(frame)
-
-			# written = libp.pcap_inject(handle, frame, frame_caplen);
-			# print('Paket Injection returned:', written)
-		except KeyboardInterrupt:
-			print('Aborted by user!')
-			break
-
-	ph.close()
-	print('End.')
-
-if __name__ == '__main__':
-	main()
