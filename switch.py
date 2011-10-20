@@ -29,6 +29,7 @@ class Switch:
 		
 		self.__mactable = dict()
 		self.__ports = dict()
+		self.__filters = dict()
 		try: # inicializacia portov (interfejsov)
 			for dev in device_list:
 				self.__ports[dev] = pcapo.libpcap()
@@ -87,11 +88,37 @@ class Switch:
 				if target_dev != dev: # ak sa cielove zariadenie nenachadza na segmente, z ktoreho ramec prichadza
 					self.sendFrame(target_dev, frame)
 			else: # cielove zariadenie nie je v mac tabulke => flooding
-				for device in [key for key in self.__ports if key != dev]: # pre vsetky porty okrem toho, z ktoreho ramec prisiel
-					self.sendFrame(device, frame)
+				for destdev in [key for key in self.__ports if key != dev]: # pre vsetky porty okrem toho, z ktoreho ramec prisiel
+					self.sendFrame(dev, destdev, frame)
 
-	def sendFrame(self, dev, frame):
-		self.__ports[dev].inject(frame)
+	def sendFrame(self, fromdev, todev, frame): # fromdev is required for filtering!
+		Siface, Diface = fromdev[:], todev[:] # todo: osetrit bytes vs str (comparision!)
+		Dmac, Smac = frame[:6], frame[6:12]
+		#todo: dokoncit vytvorenie dalsich premennych filtra
+
+		# Constants:
+		SSH = 22
+		Telnet = 23
+		HTTP = 80
+		HTTPS = 443
+		FTP = 21
+		TFTP = 69
+		SFTP = 115
+		POP3 = 995
+		IMAP = 143
+		IMAPS = 993
+		SMTP = 25
+		LDAP = 389
+		DNS = 53
+		NTP = 123
+		SNMP = 161
+		RIP = 520
+		
+		for filt in self.__filters:
+			if eval(filt):
+				return
+		# ramec nebol na zaklade pravidiel odfiltrovany a bude preposlany
+		self.__ports[todev].inject(frame)
 		
 	
 	def printMACtable(self):
@@ -100,6 +127,26 @@ class Switch:
 		with self.MACtable_lock:
 			for key, value in self.__mactable.items():
 				print(bytes2hexstr(key, sep=':'), value[0].decode('utf-8'), value[1], sep='\t')
+
+	# **************************
+	# 		filter management
+	# **************************
+	def addFilter(strfilter):
+		self.__filters.append(strfilter)
+
+	def delFilter(iFilter):
+		try:
+			self.__filters.pop(iFilter)
+		except IndexError:
+			print('Non-existing filter id!')
+	
+	def printFilters():
+		print('#: filter rule')
+		print('---------------')
+		num = 0
+		for filt in self.__filters:
+			num += 1
+			print('{0}: {1}'.format(num, filt))
 
 
 def bytes2hexstr(bytes_buffer, sep=''):
