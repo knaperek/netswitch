@@ -42,25 +42,38 @@ def main():
 	try:
 		while 1:
 			cmdline = readCommand()
-			words = cmdline.split()
+			words = cmdline.split(' ', 1) # oddeli prikaz a parametre
 			if not words:
 				continue
 			cmd, params = words[0], words[1:]
 
 			if cmd == 'show':
 				if not params:
-					print('Help: show [arp | filters | stats]') # todo
+					print('Help: show [mac | filters | stats]') # todo
 					continue
-				elif params[0] == 'arp':
+				param = params[0]
+				if param == 'mac':
 					s.printMACtable()
-				elif params[0] == 'filters':
+				elif param == 'filters':
 					s.printFilters()
-				elif params[0] == 'stats':
+				elif param == 'stats':
 					print('statistiky') # todo
-				
 
+			if cmd == 'addfilter':
+				if not params:
+					print('Help: addfilter <filter rule>')
+				strfilter = params[0]
+				if not s.addFilter(strfilter):
+					print('Error: Bad filter syntax!')
 
-	except KeyboardInterrupt:
+			if cmd == 'delfilter':
+				if not params:
+					print('Help: rmfilter <#number>')
+				filterid = int(params[0]) - 1
+				if filterid < 0 or not s.delFilter(filterid):
+					print('Error: non-existing filter #ID')
+
+	except (KeyboardInterrupt, EOFError):
 		print('Ukoncene pouzivatelom')
 
 	print('Program skoncil.')

@@ -20,7 +20,7 @@ class Switch:
 		
 		self.__mactable = dict()
 		self.__ports = dict()
-		self.__filters = dict()
+		self.__filters = list()
 		try: # inicializacia portov (interfejsov)
 			for dev in device_list:
 				self.__ports[dev] = pcapo.libpcap()
@@ -171,14 +171,32 @@ class Switch:
 	# **************************
 	# 		filter management
 	# **************************
+	def checkFilter(self, strfilter): # checks filter syntax
+		#initialization of all variables and constants
+		SSH, Telnet, HTTP, HTTPS, FTP, TFTP, SFTP, POP3, IMAP, IMAPS, SMTP, LDAP, DNS, NTP, SNMP, RIP = (1,)*16
+		Sport, Dport = 1, 1
+		Siface, Diface, Smac, Dmac, Sip, Dip = ('string', )*6
+		ip, icmp, igmp, tcp, udp = (False,)*5
+		try:
+			eval(strfilter)
+		except:
+			return False # filter syntax error
+		return True # fiter syntax (likely) ok
+		
 	def addFilter(self, strfilter):
-		self.__filters.append(strfilter)
+		if self.checkFilter(strfilter):
+			self.__filters.append(strfilter)
+			return True
+		else:
+			return False # filter syntax error
 
 	def delFilter(self, iFilter):
 		try:
 			self.__filters.pop(iFilter)
 		except IndexError:
-			print('Non-existing filter id!')
+			#print('Non-existing filter id!')
+			return False # Non-existing filter id
+		return True
 	
 	def printFilters(self):
 		print('**** Filters ****')
