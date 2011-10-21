@@ -2,16 +2,7 @@ import pcapo
 import sys
 import threading
 import time
-
-# class Port(threading.Thread):
-#
-#	MAC_Table = dict()
-#	Switch_Lock = threading.Lock()
-#
-#	def __init__(self, interface_name):
-#		super().__init__()
-#		self.__interface_name = interface_name
-#		MAC_Table[interface_name] = 
+from socket import ntohs
 
 class SwitchException(Exception):
 	def __init__(self, errmsg):
@@ -92,9 +83,53 @@ class Switch:
 					self.sendFrame(dev, destdev, frame)
 
 	def sendFrame(self, fromdev, todev, frame): # fromdev is required for filtering!
+		# initialization of variables (default values)
+		l3offset, l4offset = 0,0
+		Siface, Diface, Smac, Dmac, Sip, Dip, Sport, Dport = (None,)*8
+		ip, icmp, igmp, tcp, udp = (False,)*5
+		l3type = None
+
+		# L1:
 		Siface, Diface = fromdev[:], todev[:] # todo: osetrit bytes vs str (comparision!)
-		Dmac, Smac = frame[:6], frame[6:12]
-		#todo: dokoncit vytvorenie dalsich premennych filtra
+
+		# L2:
+		Dmac, Smac = bytes2hexstr(frame[:6], sep=':'), bytes2hexstr(frame[6:12], sep=':')
+
+		frameEth, frame802 = False, False # inicializacia na false
+		TypeLen = ntohs(frame[12:14])
+		if TypeLen >= 0x600: # (1536) Ethernet II
+			l3offset = 14
+			l3type = TypeLen
+			frameEth, frame802 = True, False
+		else: # (<= 0x5DC ~ 1500) 802.3
+			if frame[14] == 0xAA: # (DSAP == 0xAA) => SNAP header following
+				l3offset = 22
+				l3type = ntohs(frame[20:22])
+				frame802, frameEth = True, False
+			else:
+				print('Error: unsupported frame type')
+				# return # unsupported frame type
+
+		# L3:
+		if l3type == 0x800: # IPv4
+			ip = True
+			transport_protocol = frame[l3offset+9]
+			Sip = bytes2decstr(frame[l3offset+12:l3offset+16], sep='.') # Source IP
+			Dip = bytes2decstr(frame[l3offset+16:l3offset+20], sep='.') # Destination IP
+			l4offset = l3offset + 20
+			if transport_protocol == 1:
+				icmp = True
+			else if transport_protocol == 2:
+				igmp = True
+			else if transport_protocol == 6:
+				tcp = True
+			else if transport_protocol == 17:
+				udp = True
+			
+		# L4:
+		if tcp or udp:
+			Sport = ntohs(frame[l4offset+0:l4offset+2])
+			Dport = ntohs(frame[l4offset+2:l4offset+4])
 
 		# Constants:
 		SSH = 22
@@ -114,9 +149,14 @@ class Switch:
 		SNMP = 161
 		RIP = 520
 		
+		# aplikovanie filtrov
 		for filt in self.__filters:
-			if eval(filt):
-				return
+			try:
+				if eval(filt):
+					return # ramec bol odfiltrovany
+			except:
+				pass # filter zlyhal, ramec sa povazuje za nevyhovujuci danemu pravidlu
+
 		# ramec nebol na zaklade pravidiel odfiltrovany a bude preposlany
 		self.__ports[todev].inject(frame)
 		
@@ -153,3 +193,6 @@ def bytes2hexstr(bytes_buffer, sep=''):
 	""" Converts binary bytes buffer to hexa string reprezentation """	
 	return sep.join(map(lambda x: '{0:02X}'.format(x), bytes_buffer))
 
+def bytes2decstr(bytes_buffer, sep=''):
+	""" Converts binary bytes buffer to decadic string reprezentation """	
+	return sep.join(map(lambda x: '{0}'.format(x), bytes_buffer))
