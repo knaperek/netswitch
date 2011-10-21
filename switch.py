@@ -119,11 +119,11 @@ class Switch:
 			l4offset = l3offset + 20
 			if transport_protocol == 1:
 				icmp = True
-			else if transport_protocol == 2:
+			elif transport_protocol == 2:
 				igmp = True
-			else if transport_protocol == 6:
+			elif transport_protocol == 6:
 				tcp = True
-			else if transport_protocol == 17:
+			elif transport_protocol == 17:
 				udp = True
 			
 		# L4:
