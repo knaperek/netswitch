@@ -2,7 +2,7 @@ import pcapo
 import sys
 import threading
 import time
-from socket import ntohs
+import struct
 
 class SwitchException(Exception):
 	def __init__(self, errmsg):
@@ -52,35 +52,35 @@ class Switch:
 				for oldkey in oldkeys:
 					self.__mactable.pop(oldkey) # odstranenie stareho zaznamu
 
-			self.printMACtable() # debug
+			#self.printMACtable() # debug
 
-	def listenOnDevice(self, dev):
-		ph = self.__ports[dev]
+	def listenOnDevice(self, listen_dev):
+		ph = self.__ports[listen_dev]
 		counter = 0
 		while 1:
 			frame = ph.next()
 			if not frame:
 				continue
-			#print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), dev))
+			print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), listen_dev))
 			counter += 1
 			#pcapo.Dumphex(frame)
-			#self.printMACtable()
+			self.printMACtable()
 			
 			# aktualizovanie zaznamu v MAC tabulke
 			dstmac, srcmac = frame[:6], frame[6:12]
-			timeleft = 10 # todo
+			timeleft = 100 # todo
 			with self.MACtable_lock: # zamok na MAC tabulku
-				self.__mactable[srcmac] = [dev, timeleft] # obnovenie/pridanie zaznamu MAC tabulky
+				self.__mactable[srcmac] = [listen_dev, timeleft] # obnovenie/pridanie zaznamu MAC tabulky
 
 			# preposlanie dalej
 			with self.MACtable_lock: # zamok na MAC tabulku
 				target_dev = self.__mactable.get(dstmac, [None, None])[0]
 			if target_dev: # cielove zariadenie je v mac tabulke
-				if target_dev != dev: # ak sa cielove zariadenie nenachadza na segmente, z ktoreho ramec prichadza
-					self.sendFrame(target_dev, frame)
+				if target_dev != listen_dev: # ak sa cielove zariadenie nenachadza na segmente, z ktoreho ramec prichadza
+					self.sendFrame(listen_dev, target_dev, frame)
 			else: # cielove zariadenie nie je v mac tabulke => flooding
-				for destdev in [key for key in self.__ports if key != dev]: # pre vsetky porty okrem toho, z ktoreho ramec prisiel
-					self.sendFrame(dev, destdev, frame)
+				for idev in [key for key in self.__ports if key != listen_dev]: # pre vsetky porty okrem toho, z ktoreho ramec prisiel
+					self.sendFrame(listen_dev, idev, frame)
 
 	def sendFrame(self, fromdev, todev, frame): # fromdev is required for filtering!
 		# initialization of variables (default values)
@@ -159,7 +159,6 @@ class Switch:
 
 		# ramec nebol na zaklade pravidiel odfiltrovany a bude preposlany
 		self.__ports[todev].inject(frame)
-		
 	
 	def printMACtable(self):
 		print('*' * 15 + ' MAC Table ' + '*' * 15)
@@ -196,3 +195,11 @@ def bytes2hexstr(bytes_buffer, sep=''):
 def bytes2decstr(bytes_buffer, sep=''):
 	""" Converts binary bytes buffer to decadic string reprezentation """	
 	return sep.join(map(lambda x: '{0}'.format(x), bytes_buffer))
+
+def ntohs(bytes_buffer):
+	if len(bytes_buffer) == 2:
+		return struct.unpack('!H', bytes_buffer)[0]
+	else:
+		print('ntohs error') # debug
+		return 0
+
