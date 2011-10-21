@@ -64,7 +64,7 @@ class libpcap:
 
 		assert(self.__libpcap)
 		assert(self.__error_buffer)
-		self.__handle = self.__libpcap.pcap_open_live(dev, 2000, 1, 10000, self.__error_buffer) # opening live for device dev
+		self.__handle = self.__libpcap.pcap_open_live(dev, 1600, 1, 10000, self.__error_buffer) # opening live for device dev
 		if not self.__handle:
 			raise PcapDeviceException(self.getLastError())
 
@@ -91,7 +91,8 @@ class libpcap:
 		frame_len = s_pcaphdr[2]
 		#assert(frame_caplen == frame_len) # chceme zachytit cely frame!
 		if frame_caplen != frame_len:
-			print('Warning: frame_caplen != frame_len') # debug
+			#print('Warning: frame_caplen ({0}) != frame_len ({1})'.format(frame_caplen, frame_len)) # debug
+			return None
 		return bytes(frameptr[:frame_caplen]) # s konverziou na unmutable (~hashable) typ
 
 	def inject(self, frame):

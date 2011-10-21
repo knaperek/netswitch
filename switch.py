@@ -52,7 +52,7 @@ class Switch:
 				for oldkey in oldkeys:
 					self.__mactable.pop(oldkey) # odstranenie stareho zaznamu
 
-			#self.printMACtable() # debug
+			self.printMACtable() # debug
 
 	def listenOnDevice(self, listen_dev):
 		ph = self.__ports[listen_dev]
@@ -64,11 +64,11 @@ class Switch:
 			print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), listen_dev))
 			counter += 1
 			#pcapo.Dumphex(frame)
-			self.printMACtable()
+			#self.printMACtable()
 			
 			# aktualizovanie zaznamu v MAC tabulke
 			dstmac, srcmac = frame[:6], frame[6:12]
-			timeleft = 100 # todo
+			timeleft = 300 # todo
 			with self.MACtable_lock: # zamok na MAC tabulku
 				self.__mactable[srcmac] = [listen_dev, timeleft] # obnovenie/pridanie zaznamu MAC tabulky
 
