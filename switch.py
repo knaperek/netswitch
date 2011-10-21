@@ -52,7 +52,7 @@ class Switch:
 				for oldkey in oldkeys:
 					self.__mactable.pop(oldkey) # odstranenie stareho zaznamu
 
-			self.printMACtable() # debug
+			#self.printMACtable() # debug
 
 	def listenOnDevice(self, listen_dev):
 		ph = self.__ports[listen_dev]
@@ -61,7 +61,7 @@ class Switch:
 			frame = ph.next()
 			if not frame:
 				continue
-			print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), listen_dev))
+			#print('***** Frame #{0} Captured [{1} bytes] on interface {2} *******'.format(counter, len(frame), listen_dev))
 			counter += 1
 			#pcapo.Dumphex(frame)
 			#self.printMACtable()
@@ -166,26 +166,29 @@ class Switch:
 		with self.MACtable_lock:
 			for key, value in self.__mactable.items():
 				print(bytes2hexstr(key, sep=':'), value[0].decode('utf-8'), value[1], sep='\t')
+		print()
 
 	# **************************
 	# 		filter management
 	# **************************
-	def addFilter(strfilter):
+	def addFilter(self, strfilter):
 		self.__filters.append(strfilter)
 
-	def delFilter(iFilter):
+	def delFilter(self, iFilter):
 		try:
 			self.__filters.pop(iFilter)
 		except IndexError:
 			print('Non-existing filter id!')
 	
-	def printFilters():
+	def printFilters(self):
+		print('**** Filters ****')
 		print('#: filter rule')
 		print('---------------')
 		num = 0
 		for filt in self.__filters:
 			num += 1
 			print('{0}: {1}'.format(num, filt))
+		print()
 
 
 def bytes2hexstr(bytes_buffer, sep=''):
