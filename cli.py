@@ -4,7 +4,7 @@ import sys
 import switch
 import time
 
-dev_list = ['eth0', 'eth1']
+default_dev_list = ['eth0', 'eth1']
 
 #
 # Functions
@@ -25,6 +25,9 @@ def readCommand(): # Reading command line with auto history
 ##################################################################################
 
 def main():
+	dev_list = sys.argv[1:]
+	if len(dev_list) < 2:
+		dev_list = default_dev_list
 	try:
 		s = switch.Switch(dev_list)
 	except switch.SwitchException as switch_exception:
@@ -32,7 +35,9 @@ def main():
 		sys.exit(1)
 
 	print('*'*70)
-	print(' Network Switch '.center(70, '*'))
+	#print(' Network Switch '.center(70, '*'))
+	print((' Network Switch: ' + ' -- '.join(dev_list) + ' ').center(70, '*'))
+	print('*'*70)
 	print(' Autor: Jozef Knaperek '.center(70, '*'))
 	print('*'*70)
 	print()
