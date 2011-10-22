@@ -49,46 +49,61 @@ def main():
 				param = params[0] # ak su dalsie parametre, tak su v jednom retazci
 
 			if cmd == 'show':
+				help_show =	lambda: print('Help: show [mac | filters | stats]')
 				if not params:
-					print('Help: show [mac | filters | stats]') # todo
+					help_show()
 					continue
-				if param == 'mac':
-					s.printMACtable()
-				elif param == 'filters':
-					s.printFilters()
-				elif param == 'stats':
-					s.printStats()
+				for p in param.split():
+					if p == 'mac':
+						s.printMACtable()
+					elif p == 'filters':
+						s.printFilters()
+					elif p == 'stats':
+						s.printStats()
+					else:
+						help_show()
+						break
 
 			elif cmd == 'addfilter':
+				help_addfilter = lambda: print('Help: addfilter <filter rule>')
 				if not params:
-					print('Help: addfilter <filter rule>')
+					help_addfilter()	
 					continue
 				if not s.addFilter(param):
 					print('Error: Bad filter syntax!')
+					help_addfilter()
 
 			elif cmd == 'delfilter':
+				help_delfilter = lambda: print('Help: delfilter <#number>')
 				if not params:
-					print('Help: rmfilter <#number>')
+					help_delfilter()
 					continue
 				filterid = int(param) - 1
 				if filterid < 0 or not s.delFilter(filterid):
 					print('Error: non-existing filter #ID')
+					help_delfilter()
+				print('Filter successfully added')
 
 			elif cmd == 'reset':
 				if not params:
 					s.delAllFilters()
 					s.flushMACtable()
 					s.resetStats()
+				else:
+					print('Help: reset')
 
 			elif cmd == 'flush':
+				help_flush = lambda: print('Help: flush [mac | filters | stats]')
 				if not params:
-					print('Help: flush [mac | filters | stats]')
+					help_flush()
 				elif param == 'mac':
 					s.flushMACtable()
 				elif param == 'filters':
 					s.delAllFilters()
 				elif param == 'stats':
 					s.resetStats()
+				else:
+					help_flush()
 
 			else: # unknown command
 				print('Unknown command')
