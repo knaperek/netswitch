@@ -4,9 +4,7 @@ import sys
 import switch
 import time
 
-dev_list = [b'eth0', b'eth1']
-#dev_list = [b'eth0', b'eth1']
-
+dev_list = ['eth0', 'eth1']
 
 #
 # Functions
@@ -22,7 +20,6 @@ def readCommand(): # Reading command line with auto history
 		last_cmdline = cmdline		
 	return cmdline
 	
-
 ##################################################################################
 # 									main()
 ##################################################################################

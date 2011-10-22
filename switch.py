@@ -26,7 +26,7 @@ class Switch:
 		try: # inicializacia portov (interfejsov)
 			for dev in device_list:
 				self.__ports[dev] = pcapo.libpcap()
-				self.__ports[dev].open_live(bytes(dev))
+				self.__ports[dev].open_live(dev.encode('utf-8'))
 				self.__ports[dev].setdirection(1)
 		except pcapo.PcapDeviceException as errmsg:
 			raise SwitchException('Fatal error during switch initialization:' + str(errmsg))
@@ -93,7 +93,7 @@ class Switch:
 		l3type = None
 
 		# L1:
-		Siface, Diface = fromdev[:], todev[:] # todo: osetrit bytes vs str (comparision!)
+		Siface, Diface = fromdev[:], todev[:] # todo: osetrit bytes vs str (comparision!) # uz asi vyriesene
 
 		# L2:
 		Dmac, Smac = bytes2hexstr(frame[:6], sep=':'), bytes2hexstr(frame[6:12], sep=':')
@@ -211,7 +211,7 @@ class Switch:
 		print('-'*70)
 		with self.MACtable_lock:
 			for key, value in self.__mactable.items():
-				print(bytes2hexstr(key, sep=':'), value[0].decode('utf-8'), value[1], sep='\t')
+				print(bytes2hexstr(key, sep=':'), '{0[0]}\t\t{0[1]}'.format(value), sep='\t')
 		print('_'*70)
 
 	def flushMACtable(self):
@@ -284,6 +284,7 @@ class Switch:
 				print(key, '{0[0]}|{0[1]}'.format(value['switch']), sep='\t', end='')
 				for port in ports:
 					print('\t{0[0]}|{0[1]}|{0[2]}'.format(value[port]), end='')
+				print()
 			print('_'*70)
 				
 
