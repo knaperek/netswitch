@@ -60,7 +60,7 @@ def main():
 				elif param == 'filters':
 					s.printFilters()
 				elif param == 'stats':
-					print('statistiky') # todo
+					s.printStats()
 
 			elif cmd == 'addfilter':
 				if not params:
