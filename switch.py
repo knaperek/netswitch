@@ -295,7 +295,7 @@ class Switch:
 			self.__stats.clear()
 			#for protocol in 'ARP IP ICMP IGMP TCP UDP SSH Telnet HTTP HTTPS FTP TFTP SFTP POP3 IMAP IMAPS SMTP LDAP DNS NTP SNMP RIP Others allframes'.split():
 			for protocol in 'ARP IP ICMP IGMP TCP UDP Others All'.split():
-				self.__stats[protocol] = {'switch': [0,0,0]} # vytvorenie slovniku a klucu pre switch ([IN, FWD, OUT]; FWD a OUT su pre cely switch rovnake)
+				self.__stats[protocol] = OrderedDict({'switch': [0,0,0]}) # vytvorenie slovniku a klucu pre switch ([IN, FWD, OUT]; FWD a OUT su pre cely switch rovnake)
 				for port in self.__ports: # pridanie klucu pre kazdy port. Obsahovat bude 3 hodnoty: IN, FWD, OUT (per port)
 					self.__stats[protocol][port] = [0,0,0] # [IN, FWD, OUT] # per port
 
