@@ -42,6 +42,12 @@ def main():
 	print('*'*70)
 	print()
 
+	help_show =	lambda: print('Usage: show [mac | filters | stats]')
+	help_addfilter = lambda: print('Usage: addfilter <filter rule>\nAddress variables: Siface, Diface, Smac, Dmac, Sip, Dip, Sport, Dport\nLogic variables: arp, ip, icmp, igmp, tcp, udp\nOperators: (), ==, !=, not, >, <, >=, <=')
+	help_delfilter = lambda: print('Usage: delfilter <#number>')
+	help_reset = lambda: print('Usage: reset')
+	help_flush = lambda: print('Usage: flush [mac | filters | stats]')
+
 	try:
 		while 1:
 			cmdline = readCommand()
@@ -54,7 +60,6 @@ def main():
 				param = params[0] # ak su dalsie parametre, tak su v jednom retazci
 
 			if cmd == 'show':
-				help_show =	lambda: print('Help: show [mac | filters | stats]')
 				if not params:
 					help_show()
 					continue
@@ -70,7 +75,6 @@ def main():
 						break
 
 			elif cmd == 'addfilter':
-				help_addfilter = lambda: print('Help: addfilter <filter rule>')
 				if not params:
 					help_addfilter()	
 					continue
@@ -79,7 +83,6 @@ def main():
 					help_addfilter()
 
 			elif cmd == 'delfilter':
-				help_delfilter = lambda: print('Help: delfilter <#number>')
 				if not params:
 					help_delfilter()
 					continue
@@ -95,10 +98,9 @@ def main():
 					s.flushMACtable()
 					s.resetStats()
 				else:
-					print('Help: reset')
+					help_reset()
 
 			elif cmd == 'flush':
-				help_flush = lambda: print('Help: flush [mac | filters | stats]')
 				if not params:
 					help_flush()
 				elif param == 'mac':
@@ -110,13 +112,39 @@ def main():
 				else:
 					help_flush()
 
+			elif cmd == 'help':
+				print('--- Help ---')
+				print('Commands: show, addfilter, delfilter, reset, flush, quit.')
+				print('Hint: press <enter> to repeat previously entered command.')
+				print()
+				print('show: shows various information. Can be used with multiple parameters at once.')
+				help_show()
+				print()
+				print('addfilter: adds filter rule for frame filtering.')
+				help_addfilter()
+				print()
+				print('delfilter: deletes specified filter rule.')
+				help_delfilter()
+				print()
+				print('reset: sets switch to default state (deletes mac table, statistics and filters).')
+				help_reset()
+				print()
+				print('flush: cleans up specified buffer (mac table, statistics or filters)')
+				help_flush()
+				print()
+				print('quit: exits the program')
+				print('Usage: quit')
+				print()
+			elif cmd == 'quit':
+				break
+
 			else: # unknown command
 				print('Unknown command')
 
 	except (KeyboardInterrupt, EOFError):
-		print('Ukoncene pouzivatelom')
+		print('Aborted by user')
 
-	print('Program skoncil.')
+	print('Program ended.')
 
 
 #####################################################################
