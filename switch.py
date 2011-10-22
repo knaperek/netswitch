@@ -3,6 +3,7 @@ import sys
 import threading
 import time
 import struct
+from collections import OrderedDict
 
 class SwitchException(Exception):
 	def __init__(self, errmsg):
@@ -19,10 +20,10 @@ class Switch:
 
 	def __init__(self, device_list):
 		
-		self.__mactable = dict() # MAC tabulka
-		self.__ports = dict() # porty (interfejsy)
+		self.__mactable = OrderedDict() # MAC tabulka
+		self.__ports = OrderedDict() # porty (interfejsy)
 		self.__filters = list() # filtre
-		self.__stats = dict() # statistiky
+		self.__stats = OrderedDict() # statistiky
 		try: # inicializacia portov (interfejsov)
 			for dev in device_list:
 				self.__ports[dev] = pcapo.libpcap()
@@ -277,16 +278,17 @@ class Switch:
 			print('*'*70)
 			print(' Statistics '.center(70, '*'))
 			print('*'*70)
-			print('Protocol\tSwitch\t' + '\t'.join(ports))
+			print('Protocol\tSwitch\t\t' + '\t\t'.join(ports))
 			print('-'*70)
 
 			for key, value in self.__stats.items():
-				print(key, '{0[0]}|{0[1]}'.format(value['switch']), sep='\t', end='')
+				if key == 'All':
+					print('_'*70)
+				print(key, '\t{0[0]}|{0[1]}'.format(value['switch']), sep='\t', end='')
 				for port in ports:
-					print('\t{0[0]}|{0[1]}|{0[2]}'.format(value[port]), end='')
+					print('\t\t{0[0]}|{0[1]}|{0[2]}'.format(value[port]), end='')
 				print()
 			print('_'*70)
-				
 
 	def resetStats(self):
 		with self.StatsTable_lock: # zamok na tabulku statistik
