@@ -161,16 +161,26 @@ class Switch:
 		self.__ports[todev].inject(frame)
 	
 	def printMACtable(self):
-		print('*' * 15 + ' MAC Table ' + '*' * 15)
-		print('MAC address', '\tIface', 'TTL', sep='\t')
+		print('_'*70)
+		print('*'*70)
+		print(' MAC Table '.center(70, '*'))
+		print('*'*70)
+		print('MAC address', '\tIface', '\tTTL', sep='\t')
+		print('-'*70)
 		with self.MACtable_lock:
 			for key, value in self.__mactable.items():
 				print(bytes2hexstr(key, sep=':'), value[0].decode('utf-8'), value[1], sep='\t')
-		print()
+		print('_'*70)
 
-	# **************************
-	# 		filter management
-	# **************************
+	def flushMACtable(self):
+		with self.MACtable_lock:
+			self.__mactable.clear()
+
+
+	# ****************************************************************************
+	# 						filter management
+	# ****************************************************************************
+
 	def checkFilter(self, strfilter): # checks filter syntax
 		#initialization of all variables and constants
 		SSH, Telnet, HTTP, HTTPS, FTP, TFTP, SFTP, POP3, IMAP, IMAPS, SMTP, LDAP, DNS, NTP, SNMP, RIP = (1,)*16
@@ -197,16 +207,36 @@ class Switch:
 			#print('Non-existing filter id!')
 			return False # Non-existing filter id
 		return True
+
+	def delAllFilters(self):
+		self.__filters = list()
 	
 	def printFilters(self):
-		print('**** Filters ****')
-		print('#: filter rule')
-		print('---------------')
+		print('_'*70)
+		print('*'*70)
+		print(' Filters '.center(70, '*'))
+		print('*'*70)
+		print('#\tFilter rule')
+		print('-'*70)
+		#print(' Filters '.center(70, '*'))
+		#print('#: Filter rule')
+		#print('-'*70)
 		num = 0
 		for filt in self.__filters:
 			num += 1
-			print('{0}: {1}'.format(num, filt))
+			print('{0}\t{1}'.format(num, filt))
 		print()
+
+
+	##################################################################
+	#				Statistiky
+	##################################################################
+	
+	def printStats():
+		pass
+
+	def resetStats():
+		pass
 
 
 def bytes2hexstr(bytes_buffer, sep=''):

@@ -7,6 +7,7 @@ import time
 dev_list = [b'eth0', b'eth1']
 #dev_list = [b'eth0', b'eth1']
 
+
 #
 # Functions
 #
@@ -47,11 +48,13 @@ def main():
 				continue
 			cmd, params = words[0], words[1:]
 
+			if params:
+				param = params[0] # ak su dalsie parametre, tak su v jednom retazci
+
 			if cmd == 'show':
 				if not params:
 					print('Help: show [mac | filters | stats]') # todo
 					continue
-				param = params[0]
 				if param == 'mac':
 					s.printMACtable()
 				elif param == 'filters':
@@ -59,19 +62,39 @@ def main():
 				elif param == 'stats':
 					print('statistiky') # todo
 
-			if cmd == 'addfilter':
+			elif cmd == 'addfilter':
 				if not params:
 					print('Help: addfilter <filter rule>')
-				strfilter = params[0]
-				if not s.addFilter(strfilter):
+					continue
+				if not s.addFilter(param):
 					print('Error: Bad filter syntax!')
 
-			if cmd == 'delfilter':
+			elif cmd == 'delfilter':
 				if not params:
 					print('Help: rmfilter <#number>')
-				filterid = int(params[0]) - 1
+					continue
+				filterid = int(param) - 1
 				if filterid < 0 or not s.delFilter(filterid):
 					print('Error: non-existing filter #ID')
+
+			elif cmd == 'reset':
+				if not params:
+					s.delAllFilters()
+					s.flushMACtable()
+					s.resetStats()
+
+			elif cmd == 'flush':
+				if not params:
+					print('Help: flush [mac | filters | stats]')
+				elif param == 'mac':
+					s.flushMACtable()
+				elif param == 'filters':
+					s.delAllFilters()
+				elif param == 'stats':
+					s.resetStats()
+
+			else: # unknown command
+				print('Unknown command')
 
 	except (KeyboardInterrupt, EOFError):
 		print('Ukoncene pouzivatelom')
