@@ -111,7 +111,7 @@ class Switch:
 				l3type = ntohs(frame[20:22])
 				frame802, frameEth = True, False
 			else:
-				print('Error: unsupported frame type')
+				print('Error: unsupported frame type (missing SNAP header)')
 				# return # unsupported frame type
 
 		# L3:
@@ -276,12 +276,14 @@ class Switch:
 			ports = list(self.__ports.keys())
 			print('_'*70)
 			print('*'*70)
-			print(' Statistics '.center(70, '*'))
+			print(' Statistics (IN|FWD|OUT) '.center(70, '*'))
 			print('*'*70)
 			print('Protocol\tSwitch\t\t' + '\t\t'.join(ports))
 			print('-'*70)
 
 			for key, value in self.__stats.items():
+				if value['switch'] == [0,0,0]: # ak je polozka prazdna
+					continue
 				if key == 'All':
 					print('_'*70)
 				print(key, '\t{0[0]}|{0[1]}'.format(value['switch']), sep='\t', end='')
