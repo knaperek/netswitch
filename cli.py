@@ -35,7 +35,6 @@ def main():
 		sys.exit(1)
 
 	print('*'*70)
-	#print(' Network Switch '.center(70, '*'))
 	print((' Network Switch: ' + ' -- '.join(dev_list) + ' ').center(70, '*'))
 	print('*'*70)
 	print(' Autor: Jozef Knaperek '.center(70, '*'))
