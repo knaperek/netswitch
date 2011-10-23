@@ -82,7 +82,7 @@ class Switch:
 			with self.MACtable_lock: # zamok na MAC tabulku
 				target_dev = self.__mactable.get(dstmac, [None, None])[0]
 			if target_dev: # cielove zariadenie je v mac tabulke
-				if target_dev != listen_dev: # ak sa cielove zariadenie nenachadza na segmente, z ktoreho ramec prichadza
+				if True: # dodatocny hack kvoli stats. #if target_dev != listen_dev: # ak sa cielove zariadenie nenachadza na segmente, z ktoreho ramec prichadza
 					self.sendFrame(listen_dev, target_dev, frame)
 			else: # cielove zariadenie nie je v mac tabulke => flooding
 				for idev in [key for key in self.__ports if key != listen_dev]: # pre vsetky porty okrem toho, z ktoreho ramec prisiel
@@ -171,6 +171,11 @@ class Switch:
 			if unknown_proto: # ak ramec neobsahuje znamy protokol
 				self.__stats['Others']['switch'][0] += 1
 				self.__stats['Others'][fromdev][0] += 1
+
+		# Dodatocny hack: aby boli do IN zaratane aj ramce, ktore nebudu preposlane kvoli tomu, ze by isli na ten isty interface
+		# Predtym neboli taketo ramce vobec posielane do tejto metody
+		if fromdev == todev:
+			return
 
 		# aplikovanie filtrov
 		for filt in self.__filters:
