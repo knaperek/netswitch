@@ -204,16 +204,18 @@ class Switch:
 		self.__ports[todev].inject(frame)
 	
 	def printMACtable(self):
-		print('_'*70)
-		print('*'*70)
-		print(' MAC Table '.center(70, '*'))
-		print('*'*70)
+		#print('_'*70)
+		print()
+		print('='*70)
+		print('=' + ' MAC Table '.center(70 - 2, ' ') + '=')
+		print('='*70)
 		print('MAC address', '\tIface', '\tTTL', sep='\t')
 		print('-'*70)
 		with self.MACtable_lock:
 			for key, value in self.__mactable.items():
 				print(bytes2hexstr(key, sep=':'), '{0[0]}\t\t{0[1]}'.format(value), sep='\t')
-		print('_'*70)
+		#print('_'*70)
+		print()
 
 	def flushMACtable(self):
 		with self.MACtable_lock:
@@ -255,17 +257,19 @@ class Switch:
 		self.__filters = list()
 	
 	def printFilters(self):
-		print('_'*70)
-		print('*'*70)
-		print(' Filters '.center(70, '*'))
-		print('*'*70)
-		print('#\tFilter rule')
+		#print('_'*70)
+		print()
+		print('='*70)
+		print('=' + ' Filters '.center(70 - 2, ' ') + '=')
+		print('='*70)
+		print('#ID\tFilter rule')
 		print('-'*70)
 		num = 0
 		for filt in self.__filters:
 			num += 1
 			print('{0}\t{1}'.format(num, filt))
-		print('_'*70)
+		#print('_'*70)
+		print()
 
 	##################################################################
 	#				Statistiky
@@ -274,10 +278,11 @@ class Switch:
 	def printStats(self):
 		with self.StatsTable_lock:
 			ports = list(self.__ports.keys())
-			print('_'*70)
-			print('*'*70)
-			print(' Statistics (IN|FWD|OUT) '.center(70, '*'))
-			print('*'*70)
+			#print('_'*70)
+			print()
+			print('='*70)
+			print('=' + ' Statistics (IN|FWD|OUT) '.center(70 - 2, ' ') + '=')
+			print('='*70)
 			print('Protocol\tSwitch\t\t' + '\t\t'.join(ports))
 			print('-'*70)
 
@@ -290,7 +295,8 @@ class Switch:
 				for port in ports:
 					print('\t\t{0[0]}|{0[1]}|{0[2]}'.format(value[port]), end='')
 				print()
-			print('_'*70)
+			#print('_'*70)
+			print()
 
 	def resetStats(self):
 		with self.StatsTable_lock: # zamok na tabulku statistik
