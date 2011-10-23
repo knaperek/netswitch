@@ -12,7 +12,7 @@ default_dev_list = ['eth0', 'eth1']
 last_cmdline = '' # historia: predchadzajuci prikaz
 def readCommand(): # Reading command line with auto history
 	global last_cmdline
-	cmdline = input('> ')
+	cmdline = input('> ').strip()
 	if not cmdline:
 		print('> ' + last_cmdline)	
 		cmdline = last_cmdline
@@ -42,11 +42,11 @@ def main():
 	print('*'*70)
 	print()
 
-	help_show =	lambda: print('Usage: show [mac | filters | stats]')
+	help_show =	lambda: print('Usage: show [mac | filters | stats | all]')
 	help_addfilter = lambda: print('Usage: addfilter <filter rule>\nAddress variables: Siface, Diface, Smac, Dmac, Sip, Dip, Sport, Dport\nLogic variables: arp, ip, icmp, igmp, tcp, udp\nOperators: (), ==, !=, not, >, <, >=, <=')
 	help_delfilter = lambda: print('Usage: delfilter <#number>')
 	help_reset = lambda: print('Usage: reset')
-	help_flush = lambda: print('Usage: flush [mac | filters | stats]')
+	help_flush = lambda: print('Usage: flush [mac | filters | stats | all]')
 
 	try:
 		while 1:
@@ -59,22 +59,26 @@ def main():
 			if params:
 				param = params[0] # ak su dalsie parametre, tak su v jednom retazci
 
-			if cmd == 'show':
+			if 'show'.startswith(cmd):
 				if not params:
 					help_show()
 					continue
 				for p in param.split():
-					if p == 'mac':
+					if 'mac'.startswith(p):
 						s.printMACtable()
-					elif p == 'filters':
+					elif 'filters'.startswith(p):
 						s.printFilters()
-					elif p == 'stats':
+					elif 'stats'.startswith(p):
+						s.printStats()
+					elif 'all'.startswith(p):
+						s.printMACtable()
+						s.printFilters()
 						s.printStats()
 					else:
 						help_show()
 						break
 
-			elif cmd == 'addfilter':
+			elif 'addfilter'.startswith(cmd):
 				if not params:
 					help_addfilter()	
 					continue
@@ -82,7 +86,7 @@ def main():
 					print('Error: Bad filter syntax!')
 					help_addfilter()
 
-			elif cmd == 'delfilter':
+			elif 'delfilter'.startswith(cmd):
 				if not params:
 					help_delfilter()
 					continue
@@ -92,50 +96,50 @@ def main():
 					help_delfilter()
 				print('Filter successfully added')
 
-			elif cmd == 'reset':
+			elif 'reset'.startswith(cmd):
 				if not params:
-					s.delAllFilters()
 					s.flushMACtable()
+					s.delAllFilters()
 					s.resetStats()
 				else:
 					help_reset()
 
-			elif cmd == 'flush':
+			elif 'flush'.startswith(cmd):
 				if not params:
 					help_flush()
-				elif param == 'mac':
+				elif 'mac'.startswith(param):
 					s.flushMACtable()
-				elif param == 'filters':
+				elif 'filters'.startswith(param):
 					s.delAllFilters()
-				elif param == 'stats':
+				elif 'stats'.startswith(param):
+					s.resetStats()
+				elif 'all'.startswith(param): # same as reset
+					s.flushMACtable()
+					s.delAllFilters()
 					s.resetStats()
 				else:
 					help_flush()
 
-			elif cmd == 'help':
-				print('--- Help ---')
-				print('Commands: show, addfilter, delfilter, reset, flush, quit.')
+			elif 'help'.startswith(cmd):
+				print('-'*80)
+				print(' Help '.center(80, '-'))
+				print('-'*80)
+				print('\nCOMMANDS: show, addfilter, delfilter, reset, flush, quit.')
 				print('Hint: press <enter> to repeat previously entered command.')
-				print()
-				print('show: shows various information. Can be used with multiple parameters at once.')
+				print('\n> show: shows various information. Can be used with multiple parameters at once.')
 				help_show()
-				print()
-				print('addfilter: adds filter rule for frame filtering.')
+				print('\n> addfilter: adds filter rule for frame filtering.')
 				help_addfilter()
-				print()
-				print('delfilter: deletes specified filter rule.')
+				print('\n> delfilter: deletes specified filter rule.')
 				help_delfilter()
-				print()
-				print('reset: sets switch to default state (deletes mac table, statistics and filters).')
+				print('\n> reset: sets switch to default state (deletes mac table, statistics and filters). Same as flush all.')
 				help_reset()
-				print()
-				print('flush: cleans up specified buffer (mac table, statistics or filters)')
+				print('\n> flush: cleans up specified buffer (mac table, statistics or filters)')
 				help_flush()
-				print()
-				print('quit: exits the program')
+				print('\n> quit: exits the program')
 				print('Usage: quit')
 				print()
-			elif cmd == 'quit':
+			elif 'quit'.startswith(cmd):
 				break
 
 			else: # unknown command
