@@ -27,7 +27,8 @@ def help_addfilter():
 	print("""Usage: addfilter <filter rule>
 	Address variables: Siface, Diface, Smac, Dmac, Sip, Dip, Sport, Dport
 	Logic variables: arp, ip, icmp, igmp, tcp, udp
-	Well-known ports: SSH, Telnet, HTTP, HTTPS, FTP, TFTP, SFTP, POP3, IMAP, IMAPS, SMTP, LDAP, DNS, NTP, SNMP, RIP
+	Well-known ports: SSH, Telnet, HTTP, HTTPS, FTP, TFTP, SFTP, POP3,
+			  IMAP, IMAPS, SMTP, LDAP, DNS, NTP, SNMP, RIP
 	Operators: (), ==, !=, not, >, <, >=, <=')""")
 
 def help_delfilter():
@@ -38,6 +39,9 @@ def help_reset():
 
 def help_flush():
 	print('Usage: flush [mac | filters | stats | all]')
+
+def help_loop():
+	print('Usage: loop <command>')
 
 def processCommand(cmdline, s):
 	words = cmdline.split(' ', 1) # oddeli prikaz a parametre
@@ -75,6 +79,8 @@ def processCommand(cmdline, s):
 		if not s.addFilter(param):
 			print('Error: Bad filter syntax!')
 			help_addfilter()
+		else:
+			print('Filter added.\n')
 
 	elif 'delfilter'.startswith(cmd):
 		if not params:
@@ -114,7 +120,7 @@ def processCommand(cmdline, s):
 		print('-'*80)
 		print(' Help '.center(80, '-'))
 		print('-'*80)
-		print('\nCOMMANDS: show, addfilter, delfilter, reset, flush, quit.')
+		print('\nCOMMANDS: show, addfilter, delfilter, reset, flush, loop, quit.')
 		print('Hint: press <enter> to repeat previously entered command.')
 		print('\n> SHOW: shows various information. Can be used with multiple parameters at once.')
 		help_show()
@@ -122,12 +128,16 @@ def processCommand(cmdline, s):
 		help_addfilter()
 		print('\n> DELFILTER: deletes specified filter rule.')
 		help_delfilter()
-		print('\n> RESET: sets switch to default state (deletes mac table, statistics and filters). Same as flush all.')
+		print('\n> RESET: sets switch to default state (deletes mac table, statistics and filters).')
 		help_reset()
 		print('\n> FLUSH: cleans up specified buffer (mac table, statistics or filters)')
 		help_flush()
+		print('\n> LOOP: runs specified command every second until Ctrl+C is pressed.')
+		help_loop()
 		print('\n> QUIT: exits the program')
 		print('Usage: quit')
+		print()
+		print('-'*80)
 		print()
 
 	elif 'quit'.startswith(cmd):
@@ -151,20 +161,46 @@ def main():
 		print('Chyba:', switch_exception)
 		sys.exit(1)
 
-	print('*'*70)
-	print((' Network Switch: ' + ' -- '.join(dev_list) + ' ').center(70, '*'))
-	print('*'*70)
-	print(' Autor: Jozef Knaperek '.center(70, '*'))
-	print('*'*70)
+	print('_'*70)
+	#print('|'*70)
+	print('|'+' '*(70-2)+'|')
+	#print((' Network Switch: ' + ' -- '.join(dev_list) + ' ').center(70, '*'))
+	print('|'+' Multilayer Network Switch '.center(70-2, ' ')+'|') #+ ' -- '.join(dev_list) + ' ').center(70, '*'))
+	print('|'+' '*(70-2)+'|')
+	#print('*'*70)
+	print('|'+' Autor: Jozef Knaperek '.center(70-2, ' ')+'|')
+	print('|'+' '*(70-2)+'|')
+	#print('|'*70)
+	print('|' + ('[' + ']<==>['.join(dev_list) + ']').center(70-2) + '|')
+	print('|' + '_'*(70-2) + '|')
+	#print('"'*70)
 	print()
-
 
 	try:
 		while 1:
-		# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 			cmdline = readCommand()
-			processCommand(cmdline, s)
-	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+			if cmdline:
+				words = cmdline.split(' ', 1) # oddeli prikaz a parametre
+				if not words:
+					return
+				cmd, params = words[0], words[1:]
+				cmd = cmd.lower()
+
+				if 'loop'.startswith(cmd):
+					if not params:
+						help_loop()
+						#print('Command required')
+						continue
+					try:
+						while 1:
+							processCommand(params[0], s)
+							time.sleep(1)
+
+					except KeyboardInterrupt:
+						print('\nLoop ended.\n') # ukoncenie opakovania prikazu
+
+				else:
+					processCommand(cmdline, s)
 
 	except (KeyboardInterrupt, EOFError):
 		print('Aborted by user')
