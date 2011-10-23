@@ -5,6 +5,8 @@ import time
 import struct
 from collections import OrderedDict
 
+SW = 80 # Screen Width
+
 class SwitchException(Exception):
 	def __init__(self, errmsg):
 		self.__errmsg = errmsg
@@ -204,17 +206,15 @@ class Switch:
 		self.__ports[todev].inject(frame)
 	
 	def printMACtable(self):
-		#print('_'*70)
 		print()
-		print('='*70)
-		print('=' + ' MAC Table '.center(70 - 2, ' ') + '=')
-		print('='*70)
+		print('='*SW)
+		print('=' + ' MAC Table '.center(SW-2, ' ') + '=')
+		print('='*SW)
 		print('MAC address', '\tIface', '\tTTL', sep='\t')
-		print('-'*70)
+		print('-'*SW)
 		with self.MACtable_lock:
 			for key, value in self.__mactable.items():
 				print(bytes2hexstr(key, sep=':'), '{0[0]}\t\t{0[1]}'.format(value), sep='\t')
-		#print('_'*70)
 		print()
 
 	def flushMACtable(self):
@@ -249,7 +249,6 @@ class Switch:
 		try:
 			self.__filters.pop(iFilter)
 		except IndexError:
-			#print('Non-existing filter id!')
 			return False # Non-existing filter id
 		return True
 
@@ -257,18 +256,14 @@ class Switch:
 		self.__filters = list()
 	
 	def printFilters(self):
-		#print('_'*70)
 		print()
-		print('='*70)
-		print('=' + ' Filters '.center(70 - 2, ' ') + '=')
-		print('='*70)
+		print('='*SW)
+		print('=' + ' Filters '.center(SW-2, ' ') + '=')
+		print('='*SW)
 		print('#ID\tFilter rule')
-		print('-'*70)
-		num = 0
-		for filt in self.__filters:
-			num += 1
+		print('-'*SW)
+		for num, filt in enumerate(self.__filters, start=1):
 			print('{0}\t{1}'.format(num, filt))
-		#print('_'*70)
 		print()
 
 	##################################################################
@@ -278,24 +273,31 @@ class Switch:
 	def printStats(self):
 		with self.StatsTable_lock:
 			ports = list(self.__ports.keys())
-			#print('_'*70)
 			print()
-			print('='*70)
-			print('=' + ' Statistics (IN|FWD|OUT) '.center(70 - 2, ' ') + '=')
-			print('='*70)
-			print('Protocol\tSwitch\t\t' + '\t\t'.join(ports))
-			print('-'*70)
+			print('='*SW)
+			print('=' + ' Statistics (IN|FWD|OUT) '.center(SW-2, ' ') + '=')
+			print('='*SW)
+			#print('Protocol\tSwitch\t\t' + '\t\t'.join(ports))
+			tab = 15
+			print('{0:<12}{1:<20}'.format('Protocol', 'Switch') + ''.join(map('{0:<20}'.format, ports))) # vypis hlavicky tabulky (s dynamickym poctom portov)
+			print('-'*SW)
 
-			for key, value in self.__stats.items():
-				if value['switch'] == [0,0,0]: # ak je polozka prazdna
+			for protoc, values in self.__stats.items():
+				if values['switch'] == [0,0,0]: # ak je polozka prazdna
 					continue
-				if key == 'All':
-					print('_'*70)
-				print(key, '\t{0[0]}|{0[1]}'.format(value['switch']), sep='\t', end='')
-				for port in ports:
-					print('\t\t{0[0]}|{0[1]}|{0[2]}'.format(value[port]), end='')
+				if protoc == 'All':
+					print('_'*SW) # oddelovacia suctova ciara
+
+				str_values_switch = '{0[0]}|{0[1]}'.format(values['switch'])
+
+				values_ports = map(lambda port: values[port], ports)
+				str_values_ports = map('{0[0]}|{0[1]}|{0[2]}'.format, values_ports) 
+				print('{0:<12}{1:<20}'.format(protoc, str_values_switch) + ''.join(map('{0:<20}'.format, str_values_ports))) # vypis riadku tabulky (dyn. # portov)
+
+				#print(protoc, '\t{0[0]}|{0[1]}'.format(values['switch']), sep='\t', end='') # statistiky pre cely switch (vsetky porty)
+				#for port in ports:
+				#	print('\t\t{0[0]}|{0[1]}|{0[2]}'.format(values[port]), end='')
 				print()
-			#print('_'*70)
 			print()
 
 	def resetStats(self):

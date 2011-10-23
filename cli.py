@@ -4,6 +4,7 @@ import sys
 import switch
 import time
 
+SW = 80 # Screen Width
 default_dev_list = ['eth0', 'eth1']
 
 #
@@ -21,7 +22,7 @@ def readCommand(): # Reading command line with auto history
 	return cmdline
 
 def help_show():
-	print('Usage: show [mac | filters | stats | all]')
+	print('Usage: show [mac | filters | stats | all]\n')
 
 def help_addfilter():
 	print("""Usage: addfilter <filter rule>
@@ -29,19 +30,19 @@ def help_addfilter():
 	Logic variables: arp, ip, icmp, igmp, tcp, udp
 	Well-known ports: SSH, Telnet, HTTP, HTTPS, FTP, TFTP, SFTP, POP3,
 			  IMAP, IMAPS, SMTP, LDAP, DNS, NTP, SNMP, RIP
-	Operators: (), ==, !=, not, >, <, >=, <=')""")
+	Operators: (), ==, !=, not, >, <, >=, <=')\n""")
 
 def help_delfilter():
-	print('Usage: delfilter <#number>')
+	print('Usage: delfilter <#number>\n')
 
 def help_reset():
-	print('Usage: reset')
+	print('Usage: reset\n')
 
 def help_flush():
-	print('Usage: flush [mac | filters | stats | all]')
+	print('Usage: flush [mac | filters | stats | all]\n')
 
 def help_loop():
-	print('Usage: loop <command>')
+	print('Usage: loop <command>\n')
 
 def processCommand(cmdline, s):
 	words = cmdline.split(' ', 1) # oddeli prikaz a parametre
@@ -90,7 +91,8 @@ def processCommand(cmdline, s):
 		if filterid < 0 or not s.delFilter(filterid):
 			print('Error: non-existing filter #ID')
 			help_delfilter()
-		print('Filter successfully added')
+		else:
+			print('Filter #{0} deleted.\n'.format(filterid + 1))
 
 	elif 'reset'.startswith(cmd):
 		if not params:
@@ -121,20 +123,20 @@ def processCommand(cmdline, s):
 		print(' Help '.center(80, '-'))
 		print('-'*80)
 		print('\nCOMMANDS: show, addfilter, delfilter, reset, flush, loop, quit.')
-		print('Hint: press <enter> to repeat previously entered command.')
-		print('\n> SHOW: shows various information. Can be used with multiple parameters at once.')
+		print('Hint: press <enter> to repeat previously entered command.\n')
+		print('> SHOW: shows various information. Can be used with multiple parameters at once.')
 		help_show()
-		print('\n> ADDFILTER: adds filter rule for frame filtering.')
+		print('> ADDFILTER: adds filter rule for frame filtering.')
 		help_addfilter()
-		print('\n> DELFILTER: deletes specified filter rule.')
+		print('> DELFILTER: deletes specified filter rule.')
 		help_delfilter()
-		print('\n> RESET: sets switch to default state (deletes mac table, statistics and filters).')
+		print('> RESET: sets switch to default state (deletes mac table, statistics and filters).')
 		help_reset()
-		print('\n> FLUSH: cleans up specified buffer (mac table, statistics or filters)')
+		print('> FLUSH: cleans up specified buffer (mac table, statistics or filters)')
 		help_flush()
-		print('\n> LOOP: runs specified command every second until Ctrl+C is pressed.')
+		print('> LOOP: runs specified command every second until Ctrl+C is pressed.')
 		help_loop()
-		print('\n> QUIT: exits the program')
+		print('> QUIT: exits the program')
 		print('Usage: quit')
 		print()
 		print('-'*80)
@@ -161,19 +163,14 @@ def main():
 		print('Chyba:', switch_exception)
 		sys.exit(1)
 
-	print('_'*70)
-	#print('|'*70)
-	print('|'+' '*(70-2)+'|')
-	#print((' Network Switch: ' + ' -- '.join(dev_list) + ' ').center(70, '*'))
-	print('|'+' Multilayer Network Switch '.center(70-2, ' ')+'|') #+ ' -- '.join(dev_list) + ' ').center(70, '*'))
-	print('|'+' '*(70-2)+'|')
-	#print('*'*70)
-	print('|'+' Autor: Jozef Knaperek '.center(70-2, ' ')+'|')
-	print('|'+' '*(70-2)+'|')
-	#print('|'*70)
-	print('|' + ('[' + ']<==>['.join(dev_list) + ']').center(70-2) + '|')
-	print('|' + '_'*(70-2) + '|')
-	#print('"'*70)
+	print('_'*SW)
+	print('|'+' '*(SW-2)+'|')
+	print('|'+' Multilayer Network Switch '.center(SW-2, ' ')+'|')
+	print('|'+' '*(SW-2)+'|')
+	print('|'+' Autor: Jozef Knaperek '.center(SW-2, ' ')+'|')
+	print('|'+' '*(SW-2)+'|')
+	print('|' + ('[' + ']<==>['.join(dev_list) + ']').center(SW-2) + '|')
+	print('|' + '_'*(SW-2) + '|')
 	print()
 
 	try:
@@ -189,7 +186,6 @@ def main():
 				if 'loop'.startswith(cmd):
 					if not params:
 						help_loop()
-						#print('Command required')
 						continue
 					try:
 						while 1:
